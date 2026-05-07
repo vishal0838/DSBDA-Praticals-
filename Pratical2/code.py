@@ -1,43 +1,52 @@
 import pandas as pd
 import numpy as np
-from scipy import stats
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-# 0. Create a dummy "Academic Performance" dataset
+# 1. Creating the Dataset
 data = {
-    'Student_ID': [1, 2, 3, 4, 5, 6, 7, 8],
-    'Name': ['Alice', 'Bob', 'Charlie', 'David', 'Eva', 'Frank', 'Grace', 'Henry'],
-    'Math_Score': [85, 90, np.nan, 88, 92, 300, 85, 89], # 300 is an outlier
-    'Reading_Score': [70, 72, 75, 68, 71, 69, 70, 500],   # 500 is an outlier
-    'Attendance': [95, 80, 85, np.nan, 90, 88, 92, 85]   # Missing value
+    'Student_ID': range(1, 11),
+    'Math_Score': [85, 90, np.nan, 70, 88, 150, 65, 80, 75, np.nan], 
+    'Science_Score': [80, 82, 78, 95, 2, 88, 84, np.nan, 90, 85],   
+    'Reading_Score': [70, 72, 75, 68, 74, 80, 77, 82, 79, 81],
+    'Age': [20, 21, 19, 20, 22, -5, 20, 21, 22, 20]                
 }
 
 df = pd.DataFrame(data)
-print("Original Dataset:\n", df, "\n")
 
-# --- 1. Handle Missing Values & Inconsistencies ---
-# We'll fill missing Math scores with the mean and Attendance with the median.
-df['Math_Score'] = df['Math_Score'].fillna(df['Math_Score'].mean())
-df['Attendance'] = df['Attendance'].fillna(df['Attendance'].median())
+print("Step 1: Original Data with Issues")
+display(df)
 
-# --- 2. Handle Outliers ---
-# We use the Interquartile Range (IQR) method to detect and cap outliers.
-def handle_outliers(df, column):
-    Q1 = df[column].quantile(0.25)
-    Q3 = df[column].quantile(0.75)
-    IQR = Q3 - Q1
-    lower_bound = Q1 - 1.5 * IQR
-    upper_bound = Q3 + 1.5 * IQR
-    
-    # Cap values instead of deleting to keep data size consistent
-    df[column] = np.where(df[column] > upper_bound, upper_bound, 
-                 np.where(df[column] < lower_bound, lower_bound, df[column]))
-    return df
+# --- Task 1: Handling Missing Values & Inconsistencies ---
+# Fix logical inconsistency: Age cannot be negative
+df.loc[df['Age'] <= 0, 'Age'] = np.nan
 
-df = handle_outliers(df, 'Math_Score')
-df = handle_outliers(df, 'Reading_Score')
+# Fill missing values using the Median (standard practice for skewed data)
+df['Math_Score'] = df['Math_Score'].fillna(df['Math_Score'].median())
+df['Science_Score'] = df['Science_Score'].fillna(df['Science_Score'].median())
+df['Age'] = df['Age'].fillna(df['Age'].median())
 
-# --- 3. Data Transformation ---
-# We apply a Log Transformation to Reading_Score to reduce skewness.
-df['Log_Reading_Score'] = np.log1p(df['Reading_Score']) 
+# --- Task 2: Handling Outliers (IQR Method) ---
+# We calculate the bounds for Math_Score
+Q1 = df['Math_Score'].quantile(0.25)
+Q3 = df['Math_Score'].quantile(0.75)
+IQR = Q3 - Q1
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
 
-print("Processed Dataset:\n", df)
+# Capping: Replace outliers with the upper/lower boundary values
+df['Math_Score'] = np.clip(df['Math_Score'], lower_bound, upper_bound)
+
+# --- Task 3: Data Transformation ---
+# Purpose: Reducing skewness using Log Transformation
+# We use log1p (log(1+x)) to handle potential zeros gracefully
+df['Log_Science'] = np.log1p(df['Science_Score'])
+
+print("\nStep 2: Cleaned and Transformed Data")
+display(df)
+
+# Visualizing the distribution change (Optional but great for Jupyter)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+sns.histplot(df['Science_Score'], kde=True, ax=ax1).set_title('Original Science Score')
+sns.histplot(df['Log_Science'], kde=True, ax=ax2).set_title('Log Transformed Science Score')
+plt.show()
