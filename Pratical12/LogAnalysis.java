@@ -1,3 +1,7 @@
+// 12) Design and implement a distributed application using the Hadoop MapReduce framework to process and analyze log files efficiently. 
+
+
+
 import java.io.IOException;
 
 import org.apache.hadoop.conf.Configuration;

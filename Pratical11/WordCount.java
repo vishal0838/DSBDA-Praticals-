@@ -1,3 +1,10 @@
+// Problem Statement: 
+//   Develop a Hadoop MapReduce program in Eclipse to count the frequency of words present in a text file using distributed processing techniques. 
+
+
+
+
+
 import java.io.IOException;
 import java.util.StringTokenizer;
 
